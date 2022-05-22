@@ -24,12 +24,27 @@ async function run() {
     const bookingCollection = client
       .db("doctors_portal")
       .collection("bookings");
+    const userCollection = client
+       .db("doctors_portal")
+       .collection("users");
 
     app.get("/service", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
       const services = await cursor.toArray();
       res.send(services);
+    });
+
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
     });
 
     // Warning: This is not the proper way to query multiple collection.
@@ -63,13 +78,14 @@ async function run() {
       res.send(services);
     });
 
-    /*
+    /**
      * API Naming Convention
-     * app.get('/booking') // get all bookings in this collection.or get more than one or by filter
+     * app.get('/booking') // get all bookings in this collection. or get more than one or by filter
      * app.get('/booking/:id') // get a specific booking
      * app.post('/booking') // add a new booking
-     * app.patch('/booking/:id') // update one
-     * app.delete('/booking/:id') // delete one
+     * app.patch('/booking/:id) //
+     * app.put('/booking/:id') // upsert ==> update (if exists) or insert (if doesn't exist)
+     * app.delete('/booking/:id) //
      */
 
     app.get("/booking", async (req, res) => {
